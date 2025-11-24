@@ -30,8 +30,8 @@ class ReposAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = repos[position]
         holder.nameInfo.text = item.name
-        holder.descInfo.text = item.description ?: "Sin descripción"
-        holder.langInfo.text = item.language ?: "Varios"
+        holder.descInfo.text = item.description
+        holder.langInfo.text = item.language
         holder.btnEdit.setOnClickListener { onEditClick(item) }
         holder.btnDelete.setOnClickListener { onDeleteClick(item) }
     }

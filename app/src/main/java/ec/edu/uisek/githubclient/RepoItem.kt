@@ -1,15 +1,8 @@
 package ec.edu.uisek.githubclient
 
-import com.google.gson.annotations.SerializedName
-
 data class RepoItem(
-    val name: String,
-    val description: String?,
-    val language: String?,
-
-    val owner: Owner? = null
-)
-
-data class Owner(
-    val login: String
+    var name: String,
+    var description: String,
+    var language: String,
+    val iconResId: Int = R.drawable.ic_launcher_foreground
 )

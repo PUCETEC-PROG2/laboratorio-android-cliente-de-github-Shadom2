@@ -4,17 +4,21 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResultListener
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 
 class RepoListFragment : Fragment(R.layout.fragment_repo_list) {
 
     private lateinit var adapter: ReposAdapter
-    private val misDatos = mutableListOf<RepoItem>()
+
+    private val misDatos = mutableListOf(
+        RepoItem("Lab 4", "Simulador de GitHub", "Kotlin"),
+        RepoItem("Lab 5", "Añadir repositorios", "Kotlin"),
+        RepoItem("Proyecto Web", "E-commerce con React", "Java"),
+        RepoItem("Prueba", "Una prueba de repo", "Python")
+    )
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -26,48 +30,45 @@ class RepoListFragment : Fragment(R.layout.fragment_repo_list) {
 
         adapter = ReposAdapter(misDatos,
             onEditClick = { repo -> irAFormulario(repo) },
-            onDeleteClick = { repo -> eliminarRepoApi(repo) }
+            onDeleteClick = { repo -> eliminarRepoLocal(repo) }
         )
         recyclerView.adapter = adapter
-        cargarReposDeApi()
+
+        setFragmentResultListener("request_key_repo") { _, bundle ->
+            val name = bundle.getString("repo_name") ?: ""
+            val desc = bundle.getString("repo_desc") ?: ""
+            val lang = bundle.getString("repo_lang") ?: "Desconocido"
+            val isEdit = bundle.getBoolean("is_edit")
+            val originalName = bundle.getString("original_name")
+
+            if (isEdit) {
+                val index = misDatos.indexOfFirst { it.name == originalName }
+                if (index != -1) {
+                    misDatos[index].name = name
+                    misDatos[index].description = desc
+                    adapter.notifyItemChanged(index)
+                    Toast.makeText(context, "Repositorio actualizado", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                val nuevoRepo = RepoItem(name, desc, lang)
+                misDatos.add(nuevoRepo)
+                adapter.notifyItemInserted(misDatos.size - 1)
+                Toast.makeText(context, "Repositorio creado", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         fab.setOnClickListener {
-            irAFormulario(null)
+            irAFormulario(null) // null = Crear nuevo
         }
     }
 
-    private fun cargarReposDeApi() {
-        RetrofitClient.instance.listRepos().enqueue(object : Callback<List<RepoItem>> {
-            override fun onResponse(call: Call<List<RepoItem>>, response: Response<List<RepoItem>>) {
-                if (response.isSuccessful) {
-                    response.body()?.let { repos ->
-                        adapter.updateList(repos)
-                    }
-                } else {
-                    Toast.makeText(context, "Error al cargar repos", Toast.LENGTH_SHORT).show()
-                }
-            }
-            override fun onFailure(call: Call<List<RepoItem>>, t: Throwable) {
-                Toast.makeText(context, "Fallo de conexión: ${t.message}", Toast.LENGTH_SHORT).show()
-            }
-        })
-    }
-
-    private fun eliminarRepoApi(repo: RepoItem) {
-        val usuario = repo.owner?.login ?: return
-
-        RetrofitClient.instance.deleteRepo(usuario, repo.name).enqueue(object : Callback<Void> {
-            override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                if (response.isSuccessful) {
-                    Toast.makeText(context, "Eliminado", Toast.LENGTH_SHORT).show()
-                    cargarReposDeApi()
-                } else {
-                    Toast.makeText(context, "No se pudo eliminar", Toast.LENGTH_SHORT).show()
-                }
-            }
-            override fun onFailure(call: Call<Void>, t: Throwable) {
-                Toast.makeText(context, "Error de red", Toast.LENGTH_SHORT).show()
-            }
-        })
+    private fun eliminarRepoLocal(repo: RepoItem) {
+        val index = misDatos.indexOf(repo)
+        if (index != -1) {
+            misDatos.removeAt(index)
+            adapter.notifyItemRemoved(index)
+            Toast.makeText(context, "Eliminado: ${repo.name}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun irAFormulario(repo: RepoItem?) {
@@ -76,7 +77,6 @@ class RepoListFragment : Fragment(R.layout.fragment_repo_list) {
             val bundle = Bundle()
             bundle.putString("repo_name", repo.name)
             bundle.putString("repo_desc", repo.description)
-            bundle.putString("repo_owner", repo.owner?.login)
             fragment.arguments = bundle
         }
 
