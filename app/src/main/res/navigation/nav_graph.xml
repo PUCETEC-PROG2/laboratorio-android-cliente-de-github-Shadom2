@@ -13,6 +13,6 @@
         android:id="@+id/nav_form"
         android:name="ec.edu.uisek.githubclient.ProjectFormFragment"
         android:label="Formulario"
-        tools:layout="@layout/fragment_project_form" />
+        tools:layout="@layout/fragment_new_project" />
 
 </navigation>

@@ -16,9 +16,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Configurar la variable de entorno desde .env
         val envFile = rootProject.file(".env")
-
         val githubToken = if (envFile.exists()) {
             envFile.readLines()
                 .firstOrNull { it.startsWith("GITHUB_API_TOKEN=") }
